@@ -717,7 +717,7 @@ function chipsForIds(ids){
 }
 
 function unknownBuyHTML(){
-  return `<h3>🧐 이 지출은 지침에 콕 집힌 근거가 없어요</h3>
+  return `<!--fb--><h3>🧐 이 지출은 지침에 콕 집힌 근거가 없어요</h3>
   <p>대신 설명회에서 안내된 <b>공식 판단 기준</b>으로 확인해 보세요.</p>
   <ul>
     <li>① <b>지출 우선순위</b>: 학교 운영비로 지출해야 하는 항목은 아닌가요? (예: 기기 수리비, 시설 공사)</li>
@@ -748,7 +748,7 @@ function topicChipsHTML(excludeId, limit){
     + `</div>`;
 }
 function guideHTML(){
-  return `<h3>좋은 질문이에요! 🌷</h3>
+  return `<!--fb--><h3>좋은 질문이에요! 🌷</h3>
   <p>제가 콕 집어 안내해 드릴 수 있는 주제들이에요. 눌러서 바로 확인해 보세요!</p>
   ${topicChipsHTML()}
   <div class="tip">💡 <b>"예산이 500만원 남았어요"</b>처럼 금액을 말하면 활용 방법도 추천해 드려요!</div>
@@ -906,11 +906,67 @@ function addChips(){
   chat.appendChild(wrap);
 }
 
+/* ---------- AI 해석 (Claude) ----------
+   Cloudflare Worker 프록시 주소를 넣으면 켜져요. 설치법: ai-proxy/README.md */
+let AI_ENDPOINT = '';
+const AI_HISTORY = [];
+function aiOn(){ return AI_ENDPOINT.length > 0; }
+
+function mdToHtml(t){
+  const esc = t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const bold = esc.replace(/\*\*([^*\n]+)\*\*/g,'<b>$1</b>');
+  let html='', inList=false;
+  for(const ln of bold.split(/\r?\n/)){
+    if(/^\s*[-•*]\s+/.test(ln)){
+      if(!inList){ html+='<ul>'; inList=true; }
+      html += '<li>'+ln.replace(/^\s*[-•*]\s+/,'')+'</li>';
+    } else {
+      if(inList){ html+='</ul>'; inList=false; }
+      if(ln.trim()) html += '<p>'+ln+'</p>';
+    }
+  }
+  if(inList) html+='</ul>';
+  return html;
+}
+
+async function askAI(q, row){
+  const bubble = row.querySelector('.bubble');
+  try{
+    const res = await fetch(AI_ENDPOINT, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({question:q, history: AI_HISTORY.slice(-6)})
+    });
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok || !data.answer) throw new Error(data.error || '응답을 받지 못했어요');
+    AI_HISTORY.push({role:'user',content:q},{role:'assistant',content:data.answer});
+    if(AI_HISTORY.length>12) AI_HISTORY.splice(0, AI_HISTORY.length-12);
+    bubble.innerHTML = `<p class="src" style="margin:0 0 .5em">🤖 AI 해석 답변</p>`
+      + mdToHtml(data.answer)
+      + `<div class="tip">💡 AI가 지침을 해석한 답변이에요. 중요한 지출은 집행 전에 담당 장학사와 확인하세요!</div>`;
+  }catch(err){
+    bubble.innerHTML = `<p>😢 AI 연결에 문제가 생겼어요. 잠시 후 다시 시도해 주세요.</p>`
+      + `<p class="src">${String(err && err.message || err).replace(/</g,'&lt;')}</p>`;
+  }
+  row.scrollIntoView({behavior:'smooth', block:'end'});
+}
+
+function aiRetryChipHTML(q){
+  if(!aiOn()) return '';
+  return `<div class="chips" style="margin-top:.6em"><button type="button" class="chip c-sky" data-ai-q="${encodeURIComponent(q)}">🤖 AI에게 다시 묻기</button></div>`;
+}
+
 function ask(q){
   addRow('user', q.replace(/</g,'&lt;'));
   const t = addRow('bot','<span class="typing"><i></i><i></i><i></i></span>');
+  const local = answer(q);
+  // 키워드로 못 알아들은 질문(안내/근거없음 카드)은 AI가 켜져 있으면 AI에게 넘겨요
+  if(aiOn() && local.startsWith('<!--fb-->')){
+    askAI(q, t);
+    return;
+  }
   setTimeout(()=>{
-    t.querySelector('.bubble').innerHTML = answer(q);
+    t.querySelector('.bubble').innerHTML = local + aiRetryChipHTML(q);
     t.scrollIntoView({behavior:'smooth', block:'end'});
   }, 450);
 }
@@ -926,6 +982,14 @@ form.addEventListener('submit', e=>{
 chat.addEventListener('click', e=>{
   const go = e.target.closest('[data-calc-go]');
   if(go){ runCalc(go.closest('[data-calc]')); return; }
+  const ai = e.target.closest('[data-ai-q]');
+  if(ai){
+    const q = decodeURIComponent(ai.dataset.aiQ);
+    ai.disabled = true; ai.textContent = '🤖 AI가 생각 중...';
+    const t = addRow('bot','<span class="typing"><i></i><i></i><i></i></span>');
+    askAI(q, t).finally(()=>{ ai.disabled = false; ai.textContent = '🤖 AI에게 다시 묻기'; });
+    return;
+  }
   const kb = e.target.closest('[data-kb]');
   if(kb){
     const item = KB.find(k=>k.id===kb.dataset.kb);
@@ -957,6 +1021,10 @@ chat.addEventListener('click', e=>{
 })();
 
 /* ---------- boot ---------- */
+if(aiOn()){
+  const b2 = document.querySelector('.badge.b2');
+  if(b2) b2.textContent = '🤖 AI 해석 지원';
+}
 addRow('bot', GREETING);
 addChips();
 </script>
