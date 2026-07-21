@@ -265,7 +265,7 @@ const KB = [
 },
 {
   id:'budget-buy',
-  keywords:['구입','구독','구매','코스웨어','에듀테크','어디서','장터','S2B','판매','결제','계약','소프트웨어','프로그램','앱','구매처','구입처','사이트','업체','살 수','사고 싶','품의','학운위','심의','AI툴','도구 사'],
+  keywords:['구입','구독','구매','코스웨어','에듀테크','어디서','장터','S2B','판매','결제','계약','소프트웨어','프로그램','앱','구매처','구입처','사이트','업체','살 수','사고 싶','품의','학운위','심의','AI툴','도구 사','대행','구매 대행','견적','체더스','구르미','오늘배움','해외 결제','해외 구독'],
   title:'🛒 에듀테크 구매처',
   html:`<h3>🛒 에듀테크, 어디서 어떻게 사나요?</h3>
   <p>예산 범위 내에서 AI 코스웨어 등 에듀테크 구입(구독)이 가능해요(舊 AIDT 포함). 단, 절차가 있어요!</p>
@@ -285,6 +285,14 @@ const KB = [
     <li><b>에듀집</b> — <a href="https://www.edzip.kr" target="_blank" rel="noopener">edzip.kr</a> · 교과목별·가격별 에듀테크 정보와 교사 사용 후기</li>
     <li><b>KERIS 에듀테크 소프트랩 실증 디렉토리북</b> — <a href="https://www.keris.or.kr" target="_blank" rel="noopener">keris.or.kr</a>에서 다운로드</li>
   </ul>
+  <h4>🧾 견적·구매를 도와주는 민간 플랫폼 (참고)</h4>
+  <p>해외 코스웨어처럼 견적·품의·결제가 번거로운 제품은 이런 곳의 도움을 받을 수도 있어요.</p>
+  <ul>
+    <li><b>체더스</b> — <a href="https://chathess.teacherville.co.kr" target="_blank" rel="noopener">chathess.teacherville.co.kr</a> · 테크빌교육 운영, 국내외 에듀테크 판매·해외 구매 대행·맞춤 견적·무료 체험</li>
+    <li><b>에듀테크구매.com</b> — <a href="https://xn--2e0bz2l3qez0ob2mnib.com" target="_blank" rel="noopener">에듀테크구매.com</a> · (주)오늘배움 운영, 해외 에듀테크 견적·품의 서류·계정 세팅까지 지원</li>
+    <li><b>구르미교육</b> — <a href="https://www.gurumiedu.com" target="_blank" rel="noopener">gurumiedu.com</a> · AI·에듀테크 견적 문의 ☎ 02-742-1599</li>
+  </ul>
+  <div class="tip">💡 어떤 경로로 사든 <b>학운위 심의·품의 등 학교회계 절차와 예산 지침은 똑같이 적용</b>돼요. 특정 업체 추천이 아닌 참고 정보입니다.</div>
   <div class="warn">🚫 교육과정 운영과 무관한 <b>단순 진로진학 관리용 소프트웨어</b> 등은 선도학교 예산으로 구입(구독) 불가!</div>
   <p class="src">${SRC_QNA} · ${SRC_PLAN}</p>`
 },
@@ -697,7 +705,7 @@ const RULES = [
 }
 ];
 
-const WHERE_RE = /어디서|어디에|어디야|구매처|판매처|사이트|링크|주소/;
+const WHERE_RE = /어디서|어디에|어디야|구매처|판매처|사이트|링크|주소|견적|대행/;
 const BUY_INTENT_RE = /사도|살수|사줘|사고싶|사면|사되|구매|구입|구독|지출|결제|계약|대여|렌탈|써도|사용해도|되나|돼요|되요|될까|가능|해도되|해도돼|불가|안되|안돼/;
 
 function findRule(nq){
