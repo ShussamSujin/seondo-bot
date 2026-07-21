@@ -908,7 +908,7 @@ function addChips(){
 
 /* ---------- AI 해석 (Claude) ----------
    Cloudflare Worker 프록시 주소를 넣으면 켜져요. 설치법: ai-proxy/README.md */
-let AI_ENDPOINT = '';
+let AI_ENDPOINT = 'https://seondo-ai.nameless-dream-46ef.workers.dev';
 const AI_HISTORY = [];
 function aiOn(){ return AI_ENDPOINT.length > 0; }
 
