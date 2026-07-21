@@ -1,0 +1,685 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<title>선도학교 도우미 봇</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#FFC9D6">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<script>
+if ('serviceWorker' in navigator) {
+  addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+</script>
+<style>
+:root{
+  --cream:#FFF6EC; --cream2:#FFEFDD;
+  --pink:#FFC9D6; --pink-soft:#FFE3EA; --pink-deep:#F79EB4;
+  --sky:#BFE0F5; --sky-soft:#E1F1FB; --sky-deep:#8FC5E8;
+  --mint:#C6EBD9; --mint-soft:#E3F6EC; --mint-deep:#8FD6B4;
+  --peach:#FFD9BE; --peach-soft:#FFEBDD; --peach-deep:#F7B98C;
+  --ink:#6B5560; --ink-soft:#9A8490;
+  --card:#FFFDF9;
+  --line:2.5px solid var(--ink);
+  --shadow:0 4px 0 rgba(107,85,96,.18);
+  --radius:22px;
+}
+:root[data-theme="dark"]{
+  --cream:#2E2530; --cream2:#382D3A;
+  --pink:#8A5468; --pink-soft:#4A3542; --pink-deep:#C97D97;
+  --sky:#4A6A85; --sky-soft:#35434F; --sky-deep:#7FB2D6;
+  --mint:#4E7A66; --mint-soft:#33463D; --mint-deep:#7CC4A2;
+  --peach:#8A6448; --peach-soft:#4A3B30; --peach-deep:#DBA070;
+  --ink:#F0E4EA; --ink-soft:#B8A5B0;
+  --card:#3A2F3C;
+  --shadow:0 4px 0 rgba(0,0,0,.3);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --cream:#2E2530; --cream2:#382D3A;
+    --pink:#8A5468; --pink-soft:#4A3542; --pink-deep:#C97D97;
+    --sky:#4A6A85; --sky-soft:#35434F; --sky-deep:#7FB2D6;
+    --mint:#4E7A66; --mint-soft:#33463D; --mint-deep:#7CC4A2;
+    --peach:#8A6448; --peach-soft:#4A3B30; --peach-deep:#DBA070;
+    --ink:#F0E4EA; --ink-soft:#B8A5B0;
+    --card:#3A2F3C;
+    --shadow:0 4px 0 rgba(0,0,0,.3);
+  }
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; background:var(--cream); color:var(--ink);
+  font-family:"Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",system-ui,sans-serif;
+  line-height:1.65; letter-spacing:-.01em;
+  display:flex; flex-direction:column; min-height:100vh;
+}
+/* sprinkles background */
+.sprinkles{position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden}
+.sprinkles span{position:absolute; display:block; border-radius:6px; opacity:.5}
+header{
+  position:relative; z-index:2;
+  display:flex; align-items:center; gap:14px;
+  padding:16px 20px; background:var(--card);
+  border-bottom:var(--line);
+}
+.mascot{flex:0 0 auto; width:56px; height:56px}
+h1{font-size:1.15rem; margin:0; font-weight:800; text-wrap:balance}
+.sub{font-size:.8rem; color:var(--ink-soft); margin:2px 0 0}
+.badge-row{display:flex; gap:6px; margin-left:auto; flex-wrap:wrap; justify-content:flex-end}
+.badge{
+  font-size:.7rem; font-weight:700; padding:4px 10px; border-radius:999px;
+  border:2px solid var(--ink); background:var(--mint); box-shadow:var(--shadow);
+  white-space:nowrap;
+}
+.badge.b2{background:var(--pink)}
+main{
+  position:relative; z-index:1; flex:1;
+  width:100%; max-width:760px; margin:0 auto; padding:18px 14px 130px;
+  display:flex; flex-direction:column; gap:14px;
+}
+/* chat bubbles */
+.row{display:flex; gap:10px; align-items:flex-end; animation:pop .3s ease both}
+@keyframes pop{from{opacity:0; transform:translateY(8px)}to{opacity:1; transform:none}}
+@media (prefers-reduced-motion:reduce){.row{animation:none}}
+.row.user{flex-direction:row-reverse}
+.avatar{flex:0 0 auto; width:40px; height:40px}
+.bubble{
+  max-width:82%; padding:12px 16px; border-radius:var(--radius);
+  border:var(--line); box-shadow:var(--shadow); background:var(--card);
+  font-size:.92rem; overflow-wrap:break-word;
+}
+.row.bot .bubble{border-bottom-left-radius:6px}
+.row.user .bubble{background:var(--sky-soft); border-bottom-right-radius:6px}
+.bubble h3{margin:.2em 0 .4em; font-size:1rem}
+.bubble h4{margin:.8em 0 .3em; font-size:.92rem; display:flex; align-items:center; gap:6px}
+.bubble p{margin:.35em 0}
+.bubble ul{margin:.3em 0; padding-left:1.15em}
+.bubble li{margin:.22em 0}
+.bubble a{color:inherit; font-weight:700; text-decoration-thickness:2px; text-decoration-color:var(--pink-deep)}
+.bubble .tip{
+  margin-top:.6em; padding:9px 12px; border-radius:14px;
+  background:var(--peach-soft); border:2px dashed var(--peach-deep); font-size:.85rem;
+}
+.bubble .warn{
+  margin-top:.6em; padding:9px 12px; border-radius:14px;
+  background:var(--pink-soft); border:2px dashed var(--pink-deep); font-size:.85rem;
+}
+.bubble details{margin:.4em 0; border:2px solid var(--ink); border-radius:14px; background:var(--card); overflow:hidden}
+.bubble summary{cursor:pointer; padding:8px 12px; font-weight:700; font-size:.88rem; background:var(--sky-soft); list-style-position:inside}
+.bubble summary:hover{filter:brightness(1.03)}
+.bubble details[open] summary{border-bottom:2px dashed var(--ink-soft)}
+.bubble details .a{padding:8px 12px; font-size:.86rem}
+.bubble .cat{display:inline-block; font-size:.72rem; font-weight:800; padding:1px 8px; border-radius:999px; background:var(--peach-soft); border:1.5px solid var(--peach-deep); margin-right:4px}
+.bubble table{border-collapse:collapse; margin:.5em 0; font-size:.84rem; width:100%}
+.bubble .tablewrap{overflow-x:auto}
+.bubble th,.bubble td{border:2px solid var(--ink); padding:6px 9px; text-align:left; vertical-align:top}
+.bubble th{background:var(--sky-soft)}
+.bubble td.num{text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap}
+.src{margin-top:.6em; font-size:.72rem; color:var(--ink-soft)}
+/* chips */
+.chips{display:flex; flex-wrap:wrap; gap:8px; padding:2px 0 4px}
+.chip{
+  font-family:inherit; font-size:.82rem; font-weight:700; color:var(--ink);
+  background:var(--card); border:2px solid var(--ink); border-radius:999px;
+  padding:7px 14px; cursor:pointer; box-shadow:var(--shadow);
+  transition:transform .12s ease;
+}
+.chip:hover{transform:translateY(-2px)}
+.chip:focus-visible{outline:3px solid var(--sky-deep); outline-offset:2px}
+.chip.c-pink{background:var(--pink-soft)} .chip.c-sky{background:var(--sky-soft)}
+.chip.c-mint{background:var(--mint-soft)} .chip.c-peach{background:var(--peach-soft)}
+/* budget calculator */
+.calc{display:grid; gap:10px; margin-top:.5em}
+.calc label{font-size:.82rem; font-weight:700; display:grid; gap:4px}
+.calc input{
+  font-family:inherit; font-size:.95rem; padding:9px 12px;
+  border:2px solid var(--ink); border-radius:14px; background:var(--card); color:var(--ink);
+  font-variant-numeric:tabular-nums;
+}
+.calc input:focus-visible{outline:3px solid var(--mint-deep); outline-offset:1px}
+.calc .go{
+  font-family:inherit; font-size:.9rem; font-weight:800; padding:10px;
+  border:var(--line); border-radius:16px; background:var(--mint); color:var(--ink);
+  cursor:pointer; box-shadow:var(--shadow);
+}
+.calc .go:hover{filter:brightness(1.04)}
+.meter{height:18px; border:2px solid var(--ink); border-radius:999px; overflow:hidden; background:var(--card); margin:.3em 0}
+.meter i{display:block; height:100%; background:linear-gradient(90deg,var(--mint-deep),var(--sky-deep))}
+.meter i.over{background:linear-gradient(90deg,var(--peach-deep),var(--pink-deep))}
+/* input bar */
+form.bar{
+  position:fixed; left:0; right:0; bottom:0; z-index:3;
+  background:var(--card); border-top:var(--line);
+  padding:12px 14px calc(12px + env(safe-area-inset-bottom));
+}
+.bar-inner{max-width:760px; margin:0 auto; display:flex; gap:10px}
+.bar input{
+  flex:1; font-family:inherit; font-size:1rem; color:var(--ink);
+  padding:12px 18px; border:var(--line); border-radius:999px; background:var(--cream);
+}
+.bar input:focus-visible{outline:3px solid var(--pink-deep); outline-offset:2px}
+.bar button{
+  flex:0 0 auto; width:52px; height:52px; border:var(--line); border-radius:50%;
+  background:var(--pink); cursor:pointer; box-shadow:var(--shadow);
+  display:grid; place-items:center; transition:transform .12s ease;
+}
+.bar button:hover{transform:scale(1.06)}
+.bar button:focus-visible{outline:3px solid var(--sky-deep); outline-offset:2px}
+.typing{display:inline-flex; gap:5px; padding:4px 2px}
+.typing i{width:8px; height:8px; border-radius:50%; background:var(--ink-soft); animation:bnc 1s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes bnc{0%,60%,100%{transform:none}30%{transform:translateY(-5px)}}
+@media (prefers-reduced-motion:reduce){.typing i{animation:none}}
+</style>
+
+<div class="sprinkles" id="sprinkles" aria-hidden="true"></div>
+
+<header>
+  <svg class="mascot" viewBox="0 0 64 64" aria-hidden="true">
+    <ellipse cx="32" cy="58" rx="18" ry="4" fill="rgba(107,85,96,.15)"/>
+    <path d="M12 36c0-13 9-22 20-22s20 9 20 22c0 10-9 17-20 17S12 46 12 36z" fill="#FFC9D6" stroke="#6B5560" stroke-width="3"/>
+    <path d="M24 15l-3-7M40 15l3-7" stroke="#6B5560" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="21" cy="8" r="4" fill="#BFE0F5" stroke="#6B5560" stroke-width="2.5"/>
+    <circle cx="43" cy="8" r="4" fill="#C6EBD9" stroke="#6B5560" stroke-width="2.5"/>
+    <circle cx="25" cy="36" r="3.2" fill="#6B5560"/>
+    <circle cx="39" cy="36" r="3.2" fill="#6B5560"/>
+    <path d="M29 42c2 2 4 2 6 0" stroke="#6B5560" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+    <ellipse cx="18.5" cy="41" rx="3" ry="2" fill="#F79EB4" opacity=".7"/>
+    <ellipse cx="45.5" cy="41" rx="3" ry="2" fill="#F79EB4" opacity=".7"/>
+    <ellipse cx="24" cy="24" rx="6" ry="3.4" fill="#fff" opacity=".65" transform="rotate(-18 24 24)"/>
+  </svg>
+  <div>
+    <h1>선도학교 도우미 봇</h1>
+    <p class="sub">2026 AI·디지털 활용 선도학교 · 서울시교육청 지침 기반</p>
+  </div>
+  <div class="badge-row">
+    <span class="badge">지침 내장</span>
+    <span class="badge b2">브라우저에서만 동작</span>
+  </div>
+</header>
+
+<main id="chat" aria-live="polite"></main>
+
+<form class="bar" id="form">
+  <div class="bar-inner">
+    <input id="q" type="text" placeholder="궁금한 걸 물어보세요! 예: 예산이 500만원 남았어요" autocomplete="off" aria-label="질문 입력">
+    <button type="submit" aria-label="보내기">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M4 12l15-7-5 7 5 7z" fill="#6B5560" stroke="#6B5560" stroke-width="1.6" stroke-linejoin="round"/>
+      </svg>
+    </button>
+  </div>
+</form>
+
+<script>
+/* ---------- 지식 베이스 ----------
+   출처: 2026학년도 AI·디지털 활용 선도학교 운영 계획(서울시교육청 창의미래교육과, 2025.12.),
+   교육부 주요 안내 QnA, 운영 지원사항 안내 */
+const SRC_PLAN = '출처: 2026학년도 AI·디지털 활용 선도학교 운영 계획(서울시교육청 창의미래교육과)';
+const SRC_QNA = '출처: 2026년 AI·디지털 활용 선도학교 운영 관련 주요 안내(QnA)';
+const SRC_BRIEF = '출처: 2026학년도 AI·디지털활용 선도학교 운영 설명회 자료(서울시교육청)';
+const SRC_KERIS = '출처: 2026년 선도학교 운영 지원사항 안내(KERIS)';
+
+const KB = [
+{
+  id:'budget-overview',
+  keywords:['예산','편성','교부','금액','얼마','지원금','3500','35000','항목','가이드라인','회계','돈','비율','역량강화','교육활동운영비','추진경비','편성표','한도','기준'],
+  title:'💰 예산 편성 기본 규칙',
+  html:`<h3>💰 예산, 이렇게 편성해요</h3>
+  <p>교당 <b>최대 35,000천원(3,500만원)</b>이 지원돼요. 학교 규모에 따라 차등 지급될 수 있어요.</p>
+  <div class="tablewrap"><table>
+  <tr><th>항목</th><th>한도</th><th>편성 내용 및 예시</th></tr>
+  <tr><td><b>교원역량강화비</b> ⭐필수</td><td>제한 없음<br>(예시 4,000천원, 11.4%)</td><td>교원 연수, 수업 나눔, <b>학부모 대상 교육</b>, <b>교원학습공동체 운영비</b>(1팀당 1,000천원 내외 권장), 컨설팅 비용</td></tr>
+  <tr><td><b>교육활동운영비</b> ⭐필수</td><td>제한 없음<br>(예시 25,000천원, 71.4%)</td><td>AI 코스웨어 구독료, 에듀테크 구입비(구 AIDT 포함 — 이 항목에서 집행!), 학생 교육활동 재료비(간식비)</td></tr>
+  <tr><td>환경지원비</td><td class="num">3,000천원 이하<br>(약 8.5%)</td><td>기기 부속품·소모품 구입 (50만원 이상 자산성 물품 불가)</td></tr>
+  <tr><td>사업추진경비(업무추진비)</td><td class="num">3,000천원 이하<br>(약 8.5%)</td><td>리더십팀 운영 협의회비, 선도학교 운영 업무추진비</td></tr>
+  </table></div>
+  <details><summary>🧾 산출 내역 예시 자세히 보기 (총 3,500만원 기준)</summary><div class="a">
+  <ul>
+    <li><b>교원역량강화비 4,000천원</b>: 교원 연수 운영비 400,000원×6회 + 교원학습공동체 운영비 800,000원×2팀</li>
+    <li><b>교육활동운영비 25,000천원</b>: AI·디지털 자료(A) 구독료 10,000원×120명×10개월 + 자료(B) 구독료 10,000원×120명×10개월 + 자료(C) 구입비 50,000원×20명×1회</li>
+    <li><b>환경지원비 3,000천원</b>: 기기 부속품·소모품 15,000원×120대 + 기타 운영 물품 10,000원×120대</li>
+    <li><b>사업추진경비 3,000천원</b>: 리더십팀 협의회비 30,000원×10명×4회 + 운영 업무추진비 20,000원×10명×7회 + 교원학습공동체 협의회비 200,000원×2팀</li>
+  </ul>
+  </div></details>
+  <div class="warn">🚫 <b>기자재 구입 불가!</b> 50만원 이상이거나 내용연수가 있는 물품(태블릿, 노트북, 전자칠판 등)은 선도학교 예산으로 살 수 없어요.</div>
+  <h4>📌 집행 원칙</h4>
+  <ul>
+    <li><b>연중 계획적으로 나누어 집행</b> — 연말 몰아쓰기·일회성 행사 지양!</li>
+    <li>예산 변경 시 <b>내부결재</b>를 득해 적법 처리</li>
+    <li>에듀파인으로 투명하게 처리, 목적 외 사용 금지 · 자체 점검 + 교육청 점검 대비 증빙 보관</li>
+  </ul>
+  <div class="tip">💡 학교회계 예산편성 기본지침과 특별교부금 교부·운용 기준을 함께 지켜야 해요. 남은 예산 활용이 고민이면 "예산이 OO만원 남았어요"라고 물어보세요!</div>
+  <p class="src">${SRC_PLAN} · ${SRC_BRIEF}</p>`
+},
+{
+  id:'budget-buy',
+  keywords:['구입','구독','구매','코스웨어','에듀테크','어디서','장터','S2B','판매','결제','계약','소프트웨어','프로그램','앱','구매처','구입처','사이트','업체','살 수','사고 싶','품의','학운위','심의','AI툴','도구 사'],
+  title:'🛒 에듀테크 구매처',
+  html:`<h3>🛒 에듀테크, 어디서 어떻게 사나요?</h3>
+  <p>예산 범위 내에서 AI 코스웨어 등 에듀테크 구입(구독)이 가능해요(舊 AIDT 포함). 단, 절차가 있어요!</p>
+  <h4>📋 구매 전 필수 절차</h4>
+  <ul>
+    <li>학습지원 소프트웨어로 선정하려면 <b>학교운영위원회 심의</b>를 꼭 거쳐야 해요(초중등교육법 제29조의2).</li>
+    <li>교육부 장관이 안내한 「학교의 학습지원 소프트웨어 선정기준」을 준수해야 해요.</li>
+  </ul>
+  <h4>🏬 구매 채널</h4>
+  <ul>
+    <li><b>S2B 학교장터 에듀테크몰</b> — <a href="https://www.s2b.kr/Edutech/main.do" target="_blank" rel="noopener">s2b.kr/Edutech</a> · 학교 전용 전자조달, 2천만원 이하 수의계약 가능. 대부분의 코스웨어가 여기 등록돼 있어요.</li>
+    <li><b>나라장터(G2B)</b> — <a href="https://www.g2b.go.kr" target="_blank" rel="noopener">g2b.go.kr</a> · 규모가 큰 계약일 때.</li>
+    <li>업체와 직접 견적 → 학교 행정실 품의·계약도 가능해요(학교회계 지침에 따라).</li>
+  </ul>
+  <h4>🔍 제품 정보 탐색</h4>
+  <ul>
+    <li><b>에듀집</b> — <a href="https://www.edzip.kr" target="_blank" rel="noopener">edzip.kr</a> · 교과목별·가격별 에듀테크 정보와 교사 사용 후기</li>
+    <li><b>KERIS 에듀테크 소프트랩 실증 디렉토리북</b> — <a href="https://www.keris.or.kr" target="_blank" rel="noopener">keris.or.kr</a>에서 다운로드</li>
+  </ul>
+  <div class="warn">🚫 교육과정 운영과 무관한 <b>단순 진로진학 관리용 소프트웨어</b> 등은 선도학교 예산으로 구입(구독) 불가!</div>
+  <p class="src">${SRC_QNA} · ${SRC_PLAN}</p>`
+},
+{
+  id:'budget-no',
+  keywords:['불가','안되','안 되','금지','기자재','태블릿','노트북','전자칠판','물품','비품','유의','여비','출장','숙박','교구','로봇','위탁','수리','모니터','프린터','기기','못 사','살 수 없','NAS','유류비','주의','커피차','커피','푸드트럭','행사','이벤트'],
+  title:'🚫 예산으로 못 사는 것',
+  html:`<h3>🚫 이건 예산으로 못 사요</h3>
+  <ul>
+    <li><b>기자재</b>: 50만원 이상 또는 내용연수가 있는 물품 — 노트북·태블릿·모니터·NAS는 <b>금액 불문 불가</b></li>
+    <li><b>개인 자산화 물품</b>: 50만원 이하라도 개인 소유가 되는 물품(개인 수업용 마이크·스피커 세트 등) 불가</li>
+    <li><b>여비·출장비·숙박비·유류비</b>: 연수를 가더라도 여비는 지급 불가</li>
+    <li><b>시설성 공사</b>: 네트워크 공사, 공유기, 방송장비, 출입시스템, 기기 수리비 → 학교 운영비로</li>
+    <li><b>피지컬 컴퓨팅·로봇 코딩 교구</b>: AI 중점학교 사업 성격이라 선도학교 취지와 거리 있음</li>
+    <li><b>외부 업체 위탁 수업</b>: 강사가 수업을 대신하는 체험 프로그램은 사업 취지 불부합</li>
+    <li><b>교육과정과 무관한 소프트웨어</b>: 단순 진로진학 관리용 프로그램 등</li>
+    <li><b>이벤트성·일회성 지출</b>: 커피차·푸드트럭 대여 같은 행사성 경비는 사업 목적과 무관해서 불가</li>
+  </ul>
+  <div class="warn">📛 실제 부적합 사례: 커피차 대여, 싱잉볼·음악회 악단 섭외비, 노트북·태블릿·NAS·모니터 구입</div>
+  <div class="tip">💡 반대로 <b>가능한 것</b>: AI 코스웨어 구독료, 부속품·소모품(마우스·키보드·보조배터리·충전케이블), 교원 연수비(대관료 300만원 이하), 학습공동체 운영비, 학부모 수업나눔·성과공유회 비용! 애매하면 "애매한 지출"이라고 물어보세요.</div>
+  <p class="src">${SRC_PLAN} · ${SRC_BRIEF}</p>`
+},
+{
+  id:'budget-gray',
+  keywords:['애매','문화체험','입장료','강사료','내부 강사','내부강사','개인 연수','직무연수','장학사','협의','간식','다과','대관','강사','체험','판단','고민','헷갈'],
+  title:'🤔 애매한 지출, 판단 기준',
+  html:`<h3>🤔 애매한 지출, 이렇게 판단해요</h3>
+  <ul>
+    <li><b>학생·교사 문화체험비/입장료</b>: 사업 관련성 판단이 필요해요 → <b>집행 전 담당 장학사와 내부메일로 협의</b>하는 게 안전!</li>
+    <li><b>내부 강사 강사료</b>: ① 프로그램이 선도학교 운영과제에 부합 ② 방과후 강사처럼 학운위 심의 ③ 강사료는 방과후 강사에 준함 — 3가지 모두 충족하면 가능</li>
+    <li><b>개인 직무연수비</b>: 원칙은 공동체 단위 연수예요. 교원학습공동체 연구에 꼭 필요한 대면·실시간 연수라면 구성원 전체 의견 수렴 후 지출 가능(개인 연수는 학교 연수비 우선)</li>
+    <li><b>연수 대관료</b>: 300만원 이하 지출 가능(일회성 행사는 지양)</li>
+    <li><b>학생 간식·재료비</b>: 학생 교육활동에 필요한 범위에서 교육활동운영비로 가능 — 단, <b>커피차 같은 행사성 지출은 불가</b>예요</li>
+  </ul>
+  <h4>✅ 지출 전 2단계 체크</h4>
+  <ul>
+    <li>① <b>지출 우선순위</b>: 학교 운영비로 지출해야 하는 항목은 아닌지 확인 (예: 정보화기기 수리비)</li>
+    <li>② <b>선도학교 목표 확인</b>: AI·디지털 교수학습 역량 강화, 학교 전체의 AX, 학부모 교육, 학생 성장에 맞는 지출인지 확인</li>
+  </ul>
+  <div class="tip">💡 판단이 어려운 지출은 무조건 <b>집행 전에</b> 담당 장학사와 내부메일로 협의하세요. 사후 소명보다 사전 협의가 훨씬 편해요! 실제 질문·답변 원문은 "집행 Q&A"라고 물어보면 보여드려요.</div>
+  <p class="src">${SRC_BRIEF}</p>`
+},
+{
+  id:'budget-qa',
+  keywords:['집행 QA','집행QA','QA','큐앤에이','자주 묻','질의','원문','수리비','정보화기기','실제 질문','설명회'],
+  title:'📋 예산 집행 Q&A 모음',
+  html:`<h3>📋 예산 집행 Q&A — 설명회 원문 그대로!</h3>
+  <p>다른 학교 선생님들이 실제로 물어본 질문들이에요. 눌러서 답을 확인하세요.</p>
+  <details><summary>Q. 교사 개인 연수비 지출 가능한가요?</summary><div class="a"><span class="cat">교원역량강화비</span>공동체 단위로 함께 연수하고 연구하는 것이 취지예요. 개인 직무연수 비용은 연수비에서 우선 지출해 주세요. 혹시 교원학습공동체에서 연구를 위해 대면·실시간 연수가 필요하다면 지출 가능하며, 이 경우 <b>구성원 모두의 의견을 수렴해서</b> 결정해 주세요.</div></details>
+  <details><summary>Q. 교원연수 시 대관료 지출 가능한가요?</summary><div class="a"><span class="cat">교원역량강화비</span><b>300만원 이하</b> 대관료 지출 가능해요. 일회성 행사가 되지 않도록 의미 있는 연수 계획을 세워 주세요.</div></details>
+  <details><summary>Q. 25년 사례 중 취지에 맞지 않는 지출은?</summary><div class="a">싱잉볼·음악회 악단 섭외 비용, 노트북·태블릿·NAS시스템·모니터 등이 부적합 사례였어요.</div></details>
+  <details><summary>Q. 내부 강사 강사료 지급 가능한가요?</summary><div class="a">허용 기준 3가지를 모두 충족하면 가능: ① 프로그램이 선도학교 운영과제에 부합할 것 ② 방과후 강사처럼 학교운영위원회 심의를 받을 것 ③ 강사료는 방과후 강사에 준할 것</div></details>
+  <details><summary>Q. 외부 업체에 위탁해 강사 포함 학생 체험 프로그램 운영이 가능한가요?</summary><div class="a"><span class="cat">교육활동운영비</span>외부업체 강사가 수업을 대신해 주는 것은 본 사업의 취지에 부합하지 않아요. 선생님들이 동료와 함께 AI·디지털 교수학습 혁신을 연구하고 수업을 실천해, 그 결과 다양한 사례를 서울교육 공동체에 확산하는 것이 목표예요.</div></details>
+  <details><summary>Q. 정보 수업용 로봇 코딩교구·피지컬 컴퓨팅 교구를 구매해도 되나요?</summary><div class="a"><span class="cat">환경지원비</span>피지컬 컴퓨팅 교구 구매는 선도학교 사업 취지와는 거리가 있어요(오히려 AI중점학교 사업 목적에 부합). 선도학교는 여러 교과목의 융합적 프로그램 구성을 지향해요. 환경지원비는 기기 부속품·소모품 구입비예요 — 올해 마우스·키보드·보조배터리 구매 가능!</div></details>
+  <details><summary>Q. 교내 네트워크 공사, 출입 시스템, 방송 장비, 공유기 구매 가능한가요?</summary><div class="a"><span class="cat">환경지원비</span>학교 시설과 관련된 환경 구축은 <b>학교 운영비로</b> 지출해 주세요. 그리고 50만원 이하 기자재이더라도 <b>개인 자산 취득으로 이어지는 물품은 구매 불가</b>예요(청렴, 공공예산). 예: 개인 수업용 마이크·스피커 세트</div></details>
+  <details><summary>Q. 학생·교사 문화체험비, 입장료 지출 가능한가요?</summary><div class="a"><span class="cat">교원역량강화비</span><span class="cat">교육활동운영비</span>사업관련성에 대한 판단이 필요해요. <b>지출 전에 담당 장학사님과 내부메일로 상의</b>해 주세요. 일회성 행사는 지양! 예산은 1년간 사업계획에 따라 나누어 지출하고, 큰 비율을 한번에·연말에 몰아서 지출하지 않도록 해요.</div></details>
+  <details><summary>Q. 사업과 무관한 지출이란 어떤 것일까요?</summary><div class="a">지출 전 2단계 체크! ★ <b>지출 우선순위</b>: 학교 운영비로 지출해야 하는 항목은 아닌지 확인(예: 정보화기기 수리비) ★ <b>선도학교 목표 확인</b>: AI·디지털 교수학습 역량 강화, 학교 전체의 AX(AI 전환), 학부모 교육, 교수학습 혁신을 통한 학생 성장에 맞는 지출인지 확인</div></details>
+  <details><summary>Q. 역량강화 연수·출장을 갑니다. 여비 지급이 가능한가요?</summary><div class="a"><span class="cat">교원역량강화비</span><b>여비·출장비·숙박비·유류비는 지원하지 않아요.</b> 운영비·협의회비만 가능해요.</div></details>
+  <p class="src">${SRC_BRIEF} (예산 집행 QA, p.17~20)</p>`
+},
+{
+  id:'tasks',
+  keywords:['과제','필수','운영과제','뭐 해야','산출물','해야 하','워크시트','필수과제','선택과제','배움전환','관계전환','인식전환','도구전환','지도안','뭘 하','무엇을 하'],
+  title:'📚 필수 운영 과제',
+  html:`<h3>📚 운영 과제는 필수 3개 + 선택 1개!</h3>
+  <div class="tablewrap"><table>
+  <tr><th>과제</th><th>내용</th><th>산출물</th></tr>
+  <tr><td><b>필수1 배움전환</b></td><td>교수·학습·평가 혁신 사례 개발</td><td>수업지도안, 가이드북 워크시트</td></tr>
+  <tr><td><b>필수2 관계전환</b></td><td>교사-학생, 학생-학생, 학생-도구 간 깊이 있는 상호작용</td><td>상호작용 사례 및 효과</td></tr>
+  <tr><td><b>필수3 인식전환</b></td><td>교원학습공동체 운영, 공동연구·확산</td><td>학습공동체·공유회 결과</td></tr>
+  <tr><td>선택 도구전환 등</td><td>교육자료 간 창의적 융합, 자율 과제</td><td>수업사례 등</td></tr>
+  </table></div>
+  <ul>
+    <li>학교 안 <b>교원학습공동체(4인 이상, 1팀 이상)</b> 필수 — 기존 공동체로도 OK, 단 선도학교 과제를 주제로!</li>
+    <li><b>AI·디지털 리터러시 진단검사 참여 필수</b>(2026년 7월, 초5·중2·고1)</li>
+    <li>「성장하는 교사, 다섯 가지 질문」 수업실천 가이드북 활용</li>
+  </ul>
+  <p class="src">${SRC_PLAN}</p>`
+},
+{
+  id:'schedule',
+  keywords:['일정','언제','기한','마감','공유회','보고서','제출','나눔','12월','날짜','공모전','달력','스케줄','월별','계획표','결과보고','연간','현판','워크숍','콘퍼런스'],
+  title:'🗓️ 연간 일정',
+  html:`<h3>🗓️ 2026 선도학교 연간 일정</h3>
+  <div class="tablewrap"><table>
+  <tr><th>시기</th><th>내용</th></tr>
+  <tr><td>3월~12월</td><td>선도학교 운영 기간 · 교원학습공동체 구성·운영 시작</td></tr>
+  <tr><td>3~4월</td><td>SEN스쿨 가입·학생 계정 생성(진단검사 준비 — 학운위 심의, 개인정보 동의 먼저!)</td></tr>
+  <tr><td>4월</td><td><b>1차 공유회</b>(운영계획 공유·컨설팅) · KERIS 도움자료 배포 · 오리엔테이션(서면)</td></tr>
+  <tr><td>5~6월</td><td>선도학교 현판 배포 · 지식샘터 학교단위강좌 신청 시작(6월~)</td></tr>
+  <tr><td>7월</td><td><b>AI·디지털 리터러시 진단검사 본검사</b> (초5·중2·고1, 필수)</td></tr>
+  <tr><td>7~8월</td><td><b>2차 공유회</b>(운영사례 공유·컨설팅) · 8.6~7 인공지능 교육 콘퍼런스(부산 벡스코) 연계 워크숍 · 교사지원단 상반기 컨설팅</td></tr>
+  <tr><td>9월</td><td>진단검사 결과 안내</td></tr>
+  <tr><td>10~11월</td><td><b>수업나눔</b>(교육지원청 주관, 일반 교원 대상 공개) · <b>우수사례 공모전</b> · 만족도 설문(교사+학생)</td></tr>
+  <tr><td>12월 중</td><td><b>결과보고서 제출</b>(교원학습공동체 결과 포함) · 진단검사 결과지 제공 · 성과공유회</td></tr>
+  </table></div>
+  <div class="tip">💡 예산 집행도 회계연도 안에 마쳐야 하니 2학기 구독료·연수비는 미리 품의해 두세요. 연말 몰아쓰기는 금지예요!</div>
+  <p class="src">${SRC_PLAN} · ${SRC_BRIEF} · ${SRC_KERIS}</p>`
+},
+{
+  id:'aidt',
+  keywords:['AIDT','디지털교과서','교과서','필수로','꼭 써야','디지털 교육자료 필수'],
+  title:'❓ AIDT 필수인가요?',
+  html:`<h3>❓ AI 디지털 교육자료(구 AIDT), 꼭 써야 하나요?</h3>
+  <p><b>아니요, 필수가 아니에요!</b> 학교 여건과 선생님의 교수·학습 계획에 맞춰 다양한 AI·디지털 기반 교육자료를 자율적으로 선정해 활용하면 돼요.</p>
+  <ul>
+    <li>단, 학습지원 소프트웨어로 선정할 때는 <b>학교운영위원회 심의</b>를 거쳐야 해요.</li>
+    <li>구입(구독)한다면 선도학교 예산(교육활동운영비)으로 가능해요.</li>
+  </ul>
+  <p class="src">${SRC_QNA}</p>`
+},
+{
+  id:'resources',
+  keywords:['자료','사례집','수업 사례','참고','커뮤니티','위두랑','지식샘터','도움자료','어디서 봐','아카이브','노하우','브리프','자료집','수업 아이디어','다른 학교','우수사례'],
+  title:'📖 수업 사례·도움자료',
+  html:`<h3>📖 수업 사례와 도움자료는 여기서!</h3>
+  <ul>
+    <li><b>위두랑</b> — <a href="https://rang.edunet.net" target="_blank" rel="noopener">rang.edunet.net</a> · '2026 AI·디지털 활용 연구·선도학교 커뮤니티'</li>
+    <li><b>지식샘터</b> — <a href="https://educator.edunet.net" target="_blank" rel="noopener">educator.edunet.net</a> · 아카이브 > 정책·연수자료</li>
+    <li><b>KERIS</b> — <a href="https://www.keris.or.kr" target="_blank" rel="noopener">keris.or.kr</a> · 지식정보 > 교육자료·기타자료</li>
+    <li><b>에듀집</b> — <a href="https://www.edzip.kr" target="_blank" rel="noopener">edzip.kr</a> · 에듀테크 제품 정보·후기</li>
+  </ul>
+  <p>수업 혁신 사례집(중학교 1,221쪽!), 교과연계 AI활용 수업사례집, 디지털 기반 학생 맞춤교육 우수사례집도 공유돼 있으니 교과별 사례가 필요하면 찾아보세요.</p>
+  <p class="src">${SRC_QNA}</p>`
+},
+{
+  id:'support',
+  keywords:['지원','컨설팅','튜터','연수','교사지원단','도움','받을 수','강좌','문의','헬프','전화','무료','혜택','신청','디지털튜터','어디에 물어','누구한테','연락처'],
+  title:'🎁 받을 수 있는 지원',
+  html:`<h3>🎁 선도학교가 받을 수 있는 지원 (대부분 무료!)</h3>
+  <ul>
+    <li><b>교육청</b>: 선도학교 공유회(2회), 희망교 <b>디지털튜터 배치</b></li>
+    <li><b>교육지원청</b>: 학교로 찾아가는 연수, 수업나눔 지원</li>
+    <li><b>교사지원단 무료 온라인 컨설팅</b>: 모든 선도학교 대상, 회당 2~3개교 그룹 컨설팅(상반기 6~8월 / 하반기 9~11월)</li>
+    <li><b>지식샘터 학교단위강좌</b>: 같은 학교 교사 <b>5명 이상</b>이 모이면 우리 학교만을 위한 에듀테크 강좌 개설! <b>매월 7일까지</b> 신청, 선착순 50개교, 학교당 2강좌, 이수증 NEIS 등재 가능</li>
+    <li><b>통합지원센터(헬프데스크)</b>: 위두랑 커뮤니티 문의게시판(승인 없이 바로 가입) / KERIS ☎ <b>053-714-0788</b></li>
+    <li><b>도움자료</b>: 우수사례집·연간 달력(4월 배포), 현판(5~6월 배포), DXE 정책 브리프, 수업 혁신 사례 연 400종</li>
+  </ul>
+  <div class="tip">💡 지식샘터 학교단위강좌는 선착순 경쟁이 있으니 <b>월초에 바로 신청</b>하세요!</div>
+  <p class="src">${SRC_PLAN} · ${SRC_KERIS}</p>`
+},
+{
+  id:'sen',
+  keywords:['진단검사','리터러시 진단','SEN','센스쿨','진단','검사','초5','중2','고1','CBT','결과지','본검사','만족도','설문'],
+  title:'📝 리터러시 진단검사',
+  html:`<h3>📝 AI·디지털 리터러시 진단검사 (필수!)</h3>
+  <p>대상은 <b>초5·중2·고1</b>, 본검사는 <b>2026년 7월</b>(CBT 방식)이에요. 플랫폼은 <b>SEN스쿨</b>(<a href="https://senedu.kr/" target="_blank" rel="noopener">senedu.kr</a>).</p>
+  <div class="tablewrap"><table>
+  <tr><th>시기</th><th>할 일</th></tr>
+  <tr><td>3~4월</td><td>SEN스쿨 회원가입·학생 계정 생성 — <b>학운위 심의 + 학생 개인정보 동의 먼저!</b></td></tr>
+  <tr><td>7월</td><td>본검사 실시(CBT)</td></tr>
+  <tr><td>9월</td><td>결과 안내</td></tr>
+  <tr><td>12월</td><td>결과지 제공(학생용·학급용·학교용)</td></tr>
+  </table></div>
+  <div class="warn">⚠️ SEN스쿨도 학습지원 소프트웨어라 <b>학운위 심의 대상</b>이에요. 3~4월에 심의·동의 절차를 놓치면 7월 검사가 급해져요!</div>
+  <p class="src">${SRC_BRIEF}</p>`
+},
+{
+  id:'plc',
+  keywords:['학습공동체','교원학습','공동체','연구회','리더십팀','몇 명','몇명','교학공','전문적 학습','팀 구성','인원','동아리'],
+  title:'👥 교원학습공동체',
+  html:`<h3>👥 교원학습공동체, 이것만 기억해요</h3>
+  <ul>
+    <li><b>4인 이상, 1팀 이상</b> 구성 필수 — 기존에 있던 공동체를 그대로 써도 돼요.</li>
+    <li>단, <b>선도학교 운영과제를 주제로</b> 활동해야 인정!</li>
+    <li>서울은 학교별 <b>6~10명 내외 리더십팀</b> 중심 운영을 지향해요(동료 수업공개·성찰 피드백, 학부모 수업공개 포함).</li>
+    <li>예산: 교원역량강화비에서 <b>1팀당 1,000천원</b>(업무추진비 포함) 기준으로 편성</li>
+    <li>공유회(4월·7~8월)에는 학습공동체(리더십팀) 구성원 4명 내외가 참여해요.</li>
+    <li>일정: 3월 신청·구성 → 3~11월 활동 → 12월 결과보고(<b>선도학교 결과보고서에 포함</b>해 제출)</li>
+  </ul>
+  <p class="src">${SRC_PLAN} · ${SRC_BRIEF}</p>`
+},
+{
+  id:'class',
+  keywords:['수업','평가','혁신','교과','어떻게 수업','수업 설계','리터러시','윤리','방향','초점','교육과정','재구성','가이드북','수업 방법','학생 맞춤','참여'],
+  title:'🍎 수업은 어떻게?',
+  html:`<h3>🍎 수업·평가, 이런 방향으로!</h3>
+  <p>2026 선도학교의 핵심은 <b>"다양한 교과 교사가 AI·디지털 기반 교육자료로 수업·평가를 혁신"</b>하는 거예요.</p>
+  <ul>
+    <li><b>가급적 학교 구성원 전체 참여</b> — 특정 교과·교사만이 아니라요!</li>
+    <li>학생의 <b>AI·디지털 윤리와 리터러시</b> 함양에도 초점</li>
+    <li>「AI·디지털 리터러시 내용 체계」(인간중심 AI / AI·디지털 윤리 / AI·디지털 기술 / AI·디지털 활용)를 교육과정 재구성에 참고</li>
+    <li>「성장하는 교사, 다섯 가지 질문」 가이드북의 단계별 실천가이드와 워크시트 활용</li>
+    <li>초3·4, 중1 영어·수학은 맞춤형 학업성취도 자율평가 참여 권장</li>
+  </ul>
+  <div class="tip">💡 수업 사례가 필요하면 "사례집"이라고 물어보세요. 교과별 사례집 안내를 드릴게요!</div>
+  <p class="src">${SRC_PLAN} · ${SRC_QNA}</p>`
+}
+];
+
+/* ---------- 인사말 ---------- */
+const GREETING = `<h3>안녕하세요! 선도학교 도우미예요 🌸</h3>
+<p>2026 AI·디지털 활용 선도학교 운영, 헷갈리는 것들 대신 찾아드릴게요.</p>
+<p>아래 버튼을 누르거나, 자유롭게 질문해 주세요. <b>"예산이 500만원 남았어요"</b>처럼 금액을 말하면 사용 방법도 추천해 드려요!</p>`;
+
+function topicChipsHTML(excludeId, limit){
+  const colors=['c-pink','c-sky','c-mint','c-peach'];
+  let items = KB.filter(k=>k.id!==excludeId);
+  if(limit){
+    const start = Math.max(0, KB.findIndex(k=>k.id===excludeId));
+    items = items.slice(start).concat(items.slice(0,start)).slice(0,limit);
+  }
+  return `<div class="chips" style="margin-top:.5em">`
+    + items.map((k,i)=>`<button type="button" class="chip ${colors[i%4]}" data-kb="${k.id}">${k.title}</button>`).join('')
+    + `</div>`;
+}
+function guideHTML(){
+  return `<h3>좋은 질문이에요! 🌷</h3>
+  <p>제가 콕 집어 안내해 드릴 수 있는 주제들이에요. 눌러서 바로 확인해 보세요!</p>
+  ${topicChipsHTML()}
+  <div class="tip">💡 <b>"예산이 500만원 남았어요"</b>처럼 금액을 말하면 활용 방법도 추천해 드려요!</div>
+  <p>더 세부적인 사항(운영계획 변경, 학교별 회계 기준 등)은 <b>소속 교육지원청·창의미래교육과</b> 또는 <b>KERIS 통합지원센터(☎ 053-714-0788)</b>가 가장 정확하게 알려드려요.</p>`;
+}
+
+/* ---------- 예산 계산기 ---------- */
+const TOTAL_DEFAULT = 35000; // 천원
+function fmt(n){ return n.toLocaleString('ko-KR'); }
+
+function budgetAdvice(remainCheonwon){
+  const r = remainCheonwon;
+  const won = r*1000;
+  let ideas = [];
+  if(r >= 10000) ideas.push('AI 코스웨어 <b>연간 구독</b> 추가 도입 (예: 10,000원×100명×10개월 = 10,000천원)');
+  if(r >= 2000) ideas.push('2학기 <b>코스웨어 구독 연장</b>이나 학생 수 확대 (10,000원×100명×2개월 = 2,000천원)');
+  if(r >= 1000) ideas.push('<b>교원학습공동체 추가 팀 운영</b> (1팀당 1,000천원)');
+  if(r >= 400) ideas.push('<b>외부 강사 초빙 연수</b> 1~2회 (회당 400천원 내외)');
+  if(r >= 300) ideas.push('<b>학부모 대상 수업나눔·성과공유회</b> 운영비');
+  if(r >= 100) ideas.push('기기 <b>부속품·소모품</b> 구입 (터치펜, 충전 케이블, 보호필름 등 — 환경지원비 한도 내)');
+  if(ideas.length===0) ideas.push('소액이라면 소모품 구입이나 공유회 다과비 등으로 깔끔하게 마무리하세요.');
+  return `<h3>💸 남은 예산 ${fmt(r)}천원(${fmt(won)}원), 이렇게 써보세요!</h3>
+  <ul>${ideas.map(i=>'<li>'+i+'</li>').join('')}</ul>
+  <div class="warn">🚫 잊지 마세요: 기자재(50만원 이상·내용연수 물품) 구입 불가, 환경지원비·업무추진비는 각 3,000천원 이하, 에듀테크 구독은 학운위 심의 필요!</div>
+  <div class="tip">💡 집행 잔액이 남지 않도록 12월 전에 정리하고, 변경이 크면 운영계획서 변경 절차를 교육지원청에 문의하세요. 자세한 항목별 점검은 아래 계산기를 써보세요!</div>
+  ${calcFormHTML()}`;
+}
+
+function calcFormHTML(){
+  return `<div class="calc" data-calc>
+    <label>총 교부액 (천원) <input type="number" data-total value="${TOTAL_DEFAULT}" min="0"></label>
+    <label>지금까지 집행액 (천원) <input type="number" data-spent value="0" min="0"></label>
+    <label>환경지원비 편성액 (천원) <input type="number" data-env value="3000" min="0"></label>
+    <label>업무추진비 편성액 (천원) <input type="number" data-biz value="3000" min="0"></label>
+    <button type="button" class="go" data-calc-go>계산하기 ✨</button>
+    <div data-calc-out></div>
+  </div>`;
+}
+
+function runCalc(box){
+  const total = +box.querySelector('[data-total]').value || 0;
+  const spent = +box.querySelector('[data-spent]').value || 0;
+  const env = +box.querySelector('[data-env]').value || 0;
+  const biz = +box.querySelector('[data-biz]').value || 0;
+  const remain = total - spent;
+  const pct = total>0 ? Math.min(100, Math.round(spent/total*100)) : 0;
+  const cap = Math.min(3000, Math.round(total*0.085/100)*100); // 8.5% 반올림(백 단위)
+  let out = `<p><b>집행률 ${pct}%</b> · 잔액 <b>${fmt(remain)}천원</b> (${fmt(remain*1000)}원)</p>
+  <div class="meter"><i style="width:${pct}%" class="${spent>total?'over':''}"></i></div><ul>`;
+  out += env>cap ? `<li>⚠️ 환경지원비 ${fmt(env)}천원 — 한도(${fmt(cap)}천원, 총액의 8.5%·최대 3,000천원)를 <b>초과</b>했어요! 조정 필요.</li>`
+                 : `<li>✅ 환경지원비 ${fmt(env)}천원 — 한도(${fmt(cap)}천원) 이내예요.</li>`;
+  out += biz>cap ? `<li>⚠️ 업무추진비 ${fmt(biz)}천원 — 한도(${fmt(cap)}천원)를 <b>초과</b>했어요! 조정 필요.</li>`
+                 : `<li>✅ 업무추진비 ${fmt(biz)}천원 — 한도(${fmt(cap)}천원) 이내예요.</li>`;
+  if(spent>total) out += `<li>⚠️ 집행액이 교부액을 넘었어요! 학교회계 담당자와 확인하세요.</li>`;
+  out += `</ul>`;
+  if(remain>0) out += `<p>남은 ${fmt(remain)}천원 활용 아이디어가 필요하면 <b>"예산이 ${fmt(remain)}천원 남았어요"</b>라고 물어보세요!</p>`;
+  box.querySelector('[data-calc-out]').innerHTML = out;
+}
+
+/* ---------- 금액 파싱 ---------- */
+function parseRemainQuestion(q){
+  if(!/(남|잔액|잔여)/.test(q)) return null;
+  const m = q.replace(/,/g,'').match(/(\d+(?:\.\d+)?)\s*(억|천만\s*원|천만원|백만\s*원|백만원|만\s*원|만원|천원|원)?/);
+  if(!m) return null;
+  let n = parseFloat(m[1]); const unit = (m[2]||'').replace(/\s/g,'');
+  let cheon; // 천원 단위
+  if(unit==='억') cheon = n*100000;
+  else if(unit==='천만원') cheon = n*10000;
+  else if(unit==='백만원') cheon = n*1000;
+  else if(unit==='만원') cheon = n*10;
+  else if(unit==='천원') cheon = n;
+  else if(unit==='원') cheon = n/1000;
+  else cheon = n<=35000 ? n : n/1000; // 단위 없으면 천원으로 추정
+  return Math.round(cheon);
+}
+
+/* ---------- 매칭 엔진 ---------- */
+function normalize(s){ return s.toLowerCase().replace(/\s+/g,''); }
+function answer(q){
+  const remain = parseRemainQuestion(q);
+  if(remain!==null && remain>0) return budgetAdvice(remain);
+  if(/계산기|얼마 남|집행률/.test(q)) return `<h3>🧮 예산 계산기</h3><p>숫자를 넣고 계산하기를 눌러보세요!</p>${calcFormHTML()}`;
+  const nq = normalize(q);
+  let best=null, bestScore=0;
+  for(const item of KB){
+    let score=0;
+    for(const kw of item.keywords){ if(nq.includes(normalize(kw))) score += kw.length>=3?2:1; }
+    if(score>bestScore){ bestScore=score; best=item; }
+  }
+  if(!best) return guideHTML();
+  return best.html + `<h4 style="margin-top:1em">🔎 이것도 궁금하시다면</h4>${topicChipsHTML(best.id, 3)}`;
+}
+
+/* ---------- UI ---------- */
+const chat = document.getElementById('chat');
+const form = document.getElementById('form');
+const input = document.getElementById('q');
+
+const BOT_AVATAR = document.querySelector('.mascot').outerHTML.replace('class="mascot"','class="avatar"');
+function userAvatar(){
+  return `<svg class="avatar" viewBox="0 0 64 64" aria-hidden="true">
+  <circle cx="32" cy="34" r="22" fill="#BFE0F5" stroke="#6B5560" stroke-width="3"/>
+  <circle cx="25" cy="32" r="3" fill="#6B5560"/><circle cx="39" cy="32" r="3" fill="#6B5560"/>
+  <path d="M27 40c3 2.5 7 2.5 10 0" stroke="#6B5560" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <path d="M14 30c0-12 8-19 18-19s18 7 18 19" fill="#FFD9BE" stroke="#6B5560" stroke-width="3"/>
+  <ellipse cx="24" cy="18" rx="5" ry="2.6" fill="#fff" opacity=".6" transform="rotate(-15 24 18)"/>
+  </svg>`;
+}
+
+function addRow(who, html){
+  const row = document.createElement('div');
+  row.className = 'row '+who;
+  row.innerHTML = (who==='bot'?BOT_AVATAR:userAvatar()) + `<div class="bubble">${html}</div>`;
+  chat.appendChild(row);
+  row.scrollIntoView({behavior:'smooth', block:'end'});
+  return row;
+}
+
+function addChips(){
+  const wrap = document.createElement('div');
+  wrap.className='chips';
+  const chips = [
+    ['💰 예산 편성 규칙','예산 편성 가이드라인 알려줘','c-pink'],
+    ['🛒 에듀테크 어디서 사?','에듀테크 어디서 구입해?','c-sky'],
+    ['🧮 예산 계산기','예산 계산기','c-mint'],
+    ['🚫 못 사는 것','예산으로 구입 불가 항목','c-pink'],
+    ['🤔 애매한 지출','애매한 지출 판단 기준','c-peach'],
+    ['📋 집행 Q&A 원문','예산 집행 QA 보여줘','c-sky'],
+    ['📚 필수 과제','필수 운영과제가 뭐야?','c-peach'],
+    ['🗓️ 연간 일정','연간 일정 알려줘','c-sky'],
+    ['📝 진단검사','리터러시 진단검사 어떻게 해?','c-mint'],
+    ['👥 교원학습공동체','교원학습공동체 어떻게 운영해?','c-mint'],
+    ['🎁 무료 지원','받을 수 있는 지원 알려줘','c-sky'],
+    ['🍎 수업 방향','수업은 어떻게 운영해야 해?','c-peach'],
+    ['📖 사례집·자료','수업 사례집 어디서 봐?','c-pink'],
+  ];
+  for(const [label,q,color] of chips){
+    const b = document.createElement('button');
+    b.type='button'; b.className='chip '+color; b.textContent=label;
+    b.addEventListener('click',()=>ask(q));
+    wrap.appendChild(b);
+  }
+  chat.appendChild(wrap);
+}
+
+function ask(q){
+  addRow('user', q.replace(/</g,'&lt;'));
+  const t = addRow('bot','<span class="typing"><i></i><i></i><i></i></span>');
+  setTimeout(()=>{
+    t.querySelector('.bubble').innerHTML = answer(q);
+    t.scrollIntoView({behavior:'smooth', block:'end'});
+  }, 450);
+}
+
+form.addEventListener('submit', e=>{
+  e.preventDefault();
+  const q = input.value.trim();
+  if(!q) return;
+  input.value='';
+  ask(q);
+});
+
+chat.addEventListener('click', e=>{
+  const go = e.target.closest('[data-calc-go]');
+  if(go){ runCalc(go.closest('[data-calc]')); return; }
+  const kb = e.target.closest('[data-kb]');
+  if(kb){
+    const item = KB.find(k=>k.id===kb.dataset.kb);
+    if(item){
+      addRow('user', item.title.replace(/^[^ ]+ /,''));
+      const t = addRow('bot','<span class="typing"><i></i><i></i><i></i></span>');
+      setTimeout(()=>{
+        t.querySelector('.bubble').innerHTML = item.html + `<h4 style="margin-top:1em">🔎 이것도 궁금하시다면</h4>${topicChipsHTML(item.id, 3)}`;
+        t.scrollIntoView({behavior:'smooth', block:'end'});
+      }, 350);
+    }
+  }
+});
+
+/* ---------- sprinkles ---------- */
+(function(){
+  const box = document.getElementById('sprinkles');
+  const colors = ['var(--pink)','var(--sky)','var(--mint)','var(--peach)'];
+  const seeds = [
+    [5,12,-20],[15,78,30],[25,5,60],[8,45,10],[35,92,-40],[45,8,15],[55,85,-15],
+    [65,15,45],[72,70,-30],[82,30,20],[90,88,50],[95,50,-10],[60,40,35],[30,60,-25]
+  ];
+  seeds.forEach(([top,left,rot],i)=>{
+    const s = document.createElement('span');
+    const w = 6 + (i%3)*3;
+    s.style.cssText = `top:${top}%;left:${left}%;width:${w}px;height:${w/2.2}px;background:${colors[i%4]};transform:rotate(${rot}deg)`;
+    box.appendChild(s);
+  });
+})();
+
+/* ---------- boot ---------- */
+addRow('bot', GREETING);
+addChips();
+</script>
