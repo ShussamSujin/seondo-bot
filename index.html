@@ -254,7 +254,8 @@ const KB = [
   <p>교당 <b>최대 35,000천원(3,500만원)</b>이 지원돼요. <b>학교 규모에 따라 차등 지급</b>될 수 있어요.</p>
   ${isDefault
     ? `<div class="tip">💡 아래는 3,500만원 기준 예시예요. 우리 학교 교부액이 다르면 <b>"우리 학교 예산은 3,000만원이야"</b>처럼 말해주세요 — 그 금액 기준으로 다시 계산해서 보여드릴게요!</div>`
-    : `<div class="tip">✅ <b>우리 학교 교부액 ${fmt(total)}천원(${fmt(total*1000)}원)</b> 기준으로 계산했어요. 다른 금액이면 다시 말해주시거나, <button type="button" class="chip c-pink" style="padding:3px 10px;font-size:.78rem" data-reset-total>기본값(3,500만원)으로</button></div>`}
+    : `<div class="tip">✅ <b>우리 학교 교부액 ${fmt(total)}천원(${fmt(total*1000)}원)</b> 기준으로 계산했어요. 다른 금액이면 다시 말해주시거나, <button type="button" class="chip c-pink" style="padding:3px 10px;font-size:.78rem" data-reset-total>기본값(3,500만원)으로</button>
+      <br><span style="font-size:.85em">※ 아래 환경지원비·업무추진비 한도(${fmt(cap)}천원)는 지침의 "약 8.5%"를 그대로 곱한 <b>추정치</b>예요. 지침에 정확한 계산식이 없으니, <b>정확한 한도는 교육지원청·행정실에 확인</b>하세요.</span></div>`}
   <div class="tablewrap"><table>
   <tr><th>항목</th><th>한도</th><th>편성 내용 및 예시</th></tr>
   <tr><td><b>교원역량강화비</b> ⭐필수</td><td>제한 없음<br>(예시 4,000천원, 11.4%)</td><td>교원 연수, 수업 나눔, <b>학부모 대상 교육</b>, <b>교원학습공동체 운영비</b>(1팀당 최대 1,000천원), 컨설팅 비용</td></tr>
@@ -897,7 +898,7 @@ const RULES = [
   <p>기기 <b>부속품·소모품</b>은 환경지원비로 구입할 수 있어요. 올해 설명회에서도 마우스·키보드·보조배터리 구매 가능이 확인됐어요.</p>
   <p>단, 세 가지만 지키세요:</p>
   <ul>
-    <li>환경지원비 한도 <b>${fmt(schoolCap(getSchoolTotal()))}천원(교부액의 약 8.5%) 이하</b></li>
+    <li>환경지원비 한도 <b>${fmt(schoolCap(getSchoolTotal()))}천원(교부액의 약 8.5%) 이하</b>${getSchoolTotal()!==TOTAL_DEFAULT?' <span style="font-size:.85em">(추정치, 정확한 한도는 행정실 확인)</span>':''}</li>
     <li>50만원 이상·내용연수 있는 자산성 물품은 🚫</li>
     <li>개인 자산이 되는 물품은 🚫 (공용 관리!)</li>
   </ul>
@@ -1088,7 +1089,15 @@ function getSchoolTotal(){
 }
 function setSchoolTotal(cheonwon){ localStorage.setItem(SCHOOL_TOTAL_KEY, String(cheonwon)); }
 function resetSchoolTotal(){ localStorage.removeItem(SCHOOL_TOTAL_KEY); }
-function schoolCap(total){ return Math.min(3000, Math.round(total*0.085/100)*100); } // 8.5%, 최대 3,000천원
+function schoolCap(total){
+  // 지침 원문: "환경지원비 3,000천원(총 교부금액의 약 8.5%) 이하로 편성"
+  // 3,500만원(표준 예시)은 원문 산출내역에 실제로 나온 숫자를 그대로 사용.
+  // 그 외 금액은 원문에 정확한 계산식이 없어 "약 8.5%"를 그대로 곱한 추정치예요.
+  // "이하" 상한이므로 절대 올림하지 않고 내림(버림) — 올리면 실제 한도를 넘는 숫자를 보여주게 돼요.
+  // 정확한 한도는 반드시 교육지원청·행정실에 확인하세요.
+  if(total === TOTAL_DEFAULT) return 3000;
+  return Math.min(3000, Math.floor(total*0.085));
+}
 
 function resolveHtml(x){ return typeof x.html === 'function' ? x.html() : x.html; }
 
@@ -1140,11 +1149,12 @@ function runCalc(box){
   const biz = +box.querySelector('[data-biz]').value || 0;
   const remain = total - spent;
   const pct = total>0 ? Math.min(100, Math.round(spent/total*100)) : 0;
-  const cap = Math.min(3000, Math.round(total*0.085/100)*100); // 8.5% 반올림(백 단위)
+  const cap = schoolCap(total);
+  const capNote = total===TOTAL_DEFAULT ? '' : ' — 지침에 정확한 계산식이 없어 8.5%를 곱한 추정치예요, 정확한 한도는 교육지원청·행정실에 확인하세요';
   let out = `<p><b>집행률 ${pct}%</b> · 잔액 <b>${fmt(remain)}천원</b> (${fmt(remain*1000)}원)</p>
   <div class="meter"><i style="width:${pct}%" class="${spent>total?'over':''}"></i></div><ul>`;
-  out += env>cap ? `<li>⚠️ 환경지원비 ${fmt(env)}천원 — 한도(${fmt(cap)}천원, 총액의 8.5%·최대 3,000천원)를 <b>초과</b>했어요! 조정 필요.</li>`
-                 : `<li>✅ 환경지원비 ${fmt(env)}천원 — 한도(${fmt(cap)}천원) 이내예요.</li>`;
+  out += env>cap ? `<li>⚠️ 환경지원비 ${fmt(env)}천원 — 한도(${fmt(cap)}천원, 총액의 8.5%·최대 3,000천원)를 <b>초과</b>했어요! 조정 필요.${capNote}</li>`
+                 : `<li>✅ 환경지원비 ${fmt(env)}천원 — 한도(${fmt(cap)}천원) 이내예요.${capNote}</li>`;
   out += biz>cap ? `<li>⚠️ 업무추진비 ${fmt(biz)}천원 — 한도(${fmt(cap)}천원)를 <b>초과</b>했어요! 조정 필요.</li>`
                  : `<li>✅ 업무추진비 ${fmt(biz)}천원 — 한도(${fmt(cap)}천원) 이내예요.</li>`;
   if(spent>total) out += `<li>⚠️ 집행액이 교부액을 넘었어요! 학교회계 담당자와 확인하세요.</li>`;
