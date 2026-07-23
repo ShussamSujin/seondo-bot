@@ -246,22 +246,30 @@ const KB = [
   id:'budget-overview',
   keywords:['예산','편성','교부','금액','얼마','지원금','3500','35000','항목','가이드라인','회계','돈','비율','역량강화','교육활동운영비','추진경비','편성표','한도','기준'],
   title:'💰 예산 편성 기본 규칙',
-  html:`<h3>💰 예산, 이렇게 편성해요</h3>
-  <p>교당 <b>최대 35,000천원(3,500만원)</b>이 지원돼요. 학교 규모에 따라 차등 지급될 수 있어요.</p>
+  html:()=>{
+    const total = getSchoolTotal();
+    const cap = schoolCap(total);
+    const isDefault = total === TOTAL_DEFAULT;
+    return `<h3>💰 예산, 이렇게 편성해요</h3>
+  <p>교당 <b>최대 35,000천원(3,500만원)</b>이 지원돼요. <b>학교 규모에 따라 차등 지급</b>될 수 있어요.</p>
+  ${isDefault
+    ? `<div class="tip">💡 아래는 3,500만원 기준 예시예요. 우리 학교 교부액이 다르면 <b>"우리 학교 예산은 3,000만원이야"</b>처럼 말해주세요 — 그 금액 기준으로 다시 계산해서 보여드릴게요!</div>`
+    : `<div class="tip">✅ <b>우리 학교 교부액 ${fmt(total)}천원(${fmt(total*1000)}원)</b> 기준으로 계산했어요. 다른 금액이면 다시 말해주시거나, <button type="button" class="chip c-pink" style="padding:3px 10px;font-size:.78rem" data-reset-total>기본값(3,500만원)으로</button></div>`}
   <div class="tablewrap"><table>
   <tr><th>항목</th><th>한도</th><th>편성 내용 및 예시</th></tr>
   <tr><td><b>교원역량강화비</b> ⭐필수</td><td>제한 없음<br>(예시 4,000천원, 11.4%)</td><td>교원 연수, 수업 나눔, <b>학부모 대상 교육</b>, <b>교원학습공동체 운영비</b>(1팀당 최대 1,000천원), 컨설팅 비용</td></tr>
   <tr><td><b>교육활동운영비</b> ⭐필수</td><td>제한 없음<br>(예시 25,000천원, 71.4%)</td><td>AI 코스웨어 구독료, 에듀테크 구입비(구 AIDT 포함 — 이 항목에서 집행!), 학생 교육활동 재료비·간식비(기준 5,000원/명)</td></tr>
-  <tr><td>환경지원비</td><td class="num">3,000천원 이하<br>(약 8.5%)</td><td>기기 부속품·소모품 구입 (50만원 이상 자산성 물품 불가)</td></tr>
-  <tr><td>사업추진경비(업무추진비)</td><td class="num">3,000천원 이하<br>(약 8.5%)</td><td>리더십팀 운영 협의회비, 선도학교 운영 업무추진비</td></tr>
+  <tr><td>환경지원비</td><td class="num">${fmt(cap)}천원 이하<br>(약 8.5%)</td><td>기기 부속품·소모품 구입 (50만원 이상 자산성 물품 불가)</td></tr>
+  <tr><td>사업추진경비(업무추진비)</td><td class="num">${fmt(cap)}천원 이하<br>(약 8.5%)</td><td>리더십팀 운영 협의회비, 선도학교 운영 업무추진비</td></tr>
   </table></div>
-  <details><summary>🧾 산출 내역 예시 자세히 보기 (총 3,500만원 기준)</summary><div class="a">
+  <details><summary>🧾 산출 내역 예시 자세히 보기 (교육부 공식 예시, 총 3,500만원 기준)</summary><div class="a">
   <ul>
     <li><b>교원역량강화비 4,000천원</b>: 교원 연수 운영비 400,000원×6회 + 교원학습공동체 운영비 800,000원×2팀</li>
     <li><b>교육활동운영비 25,000천원</b>: AI·디지털 자료(A) 구독료 10,000원×120명×10개월 + 자료(B) 구독료 10,000원×120명×10개월 + 자료(C) 구입비 50,000원×20명×1회</li>
     <li><b>환경지원비 3,000천원</b>: 기기 부속품·소모품 15,000원×120대 + 기타 운영 물품 10,000원×120대</li>
     <li><b>사업추진경비 3,000천원</b>: 리더십팀 협의회비 30,000원×10명×4회 + 운영 업무추진비 20,000원×10명×7회 + 교원학습공동체 협의회비 200,000원×2팀</li>
   </ul>
+  <p>우리 학교 교부액이 3,500만원이 아니면 <b>총액과 환경지원비·사업추진경비(8.5%)만 비례해서 달라져요</b> — 필수 항목(교원역량강화비·교육활동운영비)은 학교 계획에 맞게 자유롭게 편성하면 돼요.</p>
   </div></details>
   <div class="warn">🚫 <b>기자재 구입 불가!</b> 50만원 이상이거나 내용연수가 있는 물품(태블릿, 노트북, 드론, 전자칠판 등)은 선도학교 예산으로 살 수 없어요.</div>
   <h4>📌 집행 원칙</h4>
@@ -273,7 +281,8 @@ const KB = [
     <li>정산보고서에는 <b>단가×수량(인원·횟수·기간)=금액</b>으로 구체적으로 기재 — 제출은 <b>2026년 12월 첫주</b>(교육부 공통 양식, 추후 안내)</li>
   </ul>
   <div class="tip">💡 학교회계 예산편성 기본지침과 특별교부금 교부·운용 기준을 함께 지켜야 해요. 남은 예산 활용이 고민이면 "예산이 OO만원 남았어요"라고 물어보세요!</div>
-  <p class="src">${SRC_GUIDE} · ${SRC_PLAN} · ${SRC_BRIEF}</p>`
+  <p class="src">${SRC_GUIDE} · ${SRC_PLAN} · ${SRC_BRIEF}</p>`;
+  }
 },
 {
   id:'budget-buy',
@@ -888,7 +897,7 @@ const RULES = [
   <p>기기 <b>부속품·소모품</b>은 환경지원비로 구입할 수 있어요. 올해 설명회에서도 마우스·키보드·보조배터리 구매 가능이 확인됐어요.</p>
   <p>단, 세 가지만 지키세요:</p>
   <ul>
-    <li>환경지원비 한도 <b>3,000천원(총 교부액의 약 8.5%) 이하</b></li>
+    <li>환경지원비 한도 <b>${fmt(schoolCap(getSchoolTotal()))}천원(교부액의 약 8.5%) 이하</b></li>
     <li>50만원 이상·내용연수 있는 자산성 물품은 🚫</li>
     <li>개인 자산이 되는 물품은 🚫 (공용 관리!)</li>
   </ul>
@@ -1061,13 +1070,34 @@ function guideHTML(){
   return `<!--fb--><h3>좋은 질문이에요! 🌷</h3>
   <p>제가 콕 집어 안내해 드릴 수 있는 주제들이에요. 눌러서 바로 확인해 보세요!</p>
   ${topicChipsHTML()}
-  <div class="tip">💡 <b>"예산이 500만원 남았어요"</b>처럼 금액을 말하면 활용 방법도 추천해 드려요!</div>
+  <div class="tip">💡 <b>"예산이 500만원 남았어요"</b>처럼 금액을 말하면 활용 방법도 추천해 드려요! 우리 학교 교부액이 3,500만원이 아니라면 <b>"우리 학교 예산은 3,000만원이야"</b>처럼 알려주세요 — 그 기준으로 계산해 드려요.</div>
   <p>더 세부적인 사항(운영계획 변경, 학교별 회계 기준 등)은 <b>소속 교육지원청·창의미래교육과</b> 또는 <b>KERIS 통합지원센터(☎ 053-714-0788)</b>가 가장 정확하게 알려드려요.</p>`;
 }
 
 /* ---------- 예산 계산기 ---------- */
 const TOTAL_DEFAULT = 35000; // 천원
 function fmt(n){ return n.toLocaleString('ko-KR'); }
+
+/* ---------- 우리 학교 교부액(총 예산) 기억하기 ----------
+   3,500만원은 예시일 뿐, 학교 규모에 따라 실제 교부액이 달라요.
+   한 번 말해두면 계산기·안내 문구가 그 금액 기준으로 바뀌어요. */
+const SCHOOL_TOTAL_KEY = 'seondoSchoolTotalCheonwon';
+function getSchoolTotal(){
+  const v = parseInt(localStorage.getItem(SCHOOL_TOTAL_KEY), 10);
+  return (v && v > 0) ? v : TOTAL_DEFAULT;
+}
+function setSchoolTotal(cheonwon){ localStorage.setItem(SCHOOL_TOTAL_KEY, String(cheonwon)); }
+function resetSchoolTotal(){ localStorage.removeItem(SCHOOL_TOTAL_KEY); }
+function schoolCap(total){ return Math.min(3000, Math.round(total*0.085/100)*100); } // 8.5%, 최대 3,000천원
+
+function resolveHtml(x){ return typeof x.html === 'function' ? x.html() : x.html; }
+
+function confirmSchoolTotalHTML(total){
+  const overview = KB.find(k=>k.id==='budget-overview');
+  return `<h3>✅ 우리 학교 교부액을 ${fmt(total)}천원(${fmt(total*1000)}원)으로 기억할게요!</h3>
+  <p>이제부터 예산 안내와 계산기가 이 금액 기준으로 보여드려요.</p>
+  ${resolveHtml(overview)}`;
+}
 
 function budgetAdvice(remainCheonwon){
   const r = remainCheonwon;
@@ -1081,20 +1111,23 @@ function budgetAdvice(remainCheonwon){
   if(r >= 300) ideas.push('<b>학부모 대상 수업나눔·성과공유회</b> 운영비');
   if(r >= 100) ideas.push('기기 <b>부속품·소모품</b> 구입 (터치펜, 충전 케이블, 보호필름 등 — 환경지원비 한도 내)');
   if(ideas.length===0) ideas.push('소액이라면 소모품 구입이나 공유회 다과비 등으로 깔끔하게 마무리하세요.');
+  const _cap = schoolCap(getSchoolTotal());
   return `<h3>💸 남은 예산 ${fmt(r)}천원(${fmt(won)}원), 이렇게 써보세요!</h3>
   <ul>${ideas.map(i=>'<li>'+i+'</li>').join('')}</ul>
-  <div class="warn">🚫 잊지 마세요: 기자재(50만원 이상·내용연수 물품) 구입 불가, 환경지원비·업무추진비는 각 3,000천원 이하, 에듀테크 구독은 학운위 심의 필요!</div>
+  <div class="warn">🚫 잊지 마세요: 기자재(50만원 이상·내용연수 물품) 구입 불가, 환경지원비·업무추진비는 각 ${fmt(_cap)}천원(우리 학교 교부액의 약 8.5%) 이하, 에듀테크 구독은 학운위 심의 필요!</div>
   <div class="tip">💡 집행 잔액이 남지 않도록 12월 전에 정리하고, 변경이 크면 운영계획서 변경 절차를 교육지원청에 문의하세요. 자세한 항목별 점검은 아래 계산기를 써보세요!</div>
   ${r>=5000?`<div class="chips" style="margin-top:.5em"><button type="button" class="chip c-mint" data-kb="tips">💡 큰 예산 알차게 쓰는 선배 노하우</button></div>`:''}
   ${calcFormHTML()}`;
 }
 
 function calcFormHTML(){
+  const total = getSchoolTotal();
+  const cap = schoolCap(total);
   return `<div class="calc" data-calc>
-    <label>총 교부액 (천원) <input type="number" data-total value="${TOTAL_DEFAULT}" min="0"></label>
+    <label>총 교부액 (천원) <input type="number" data-total value="${total}" min="0"></label>
     <label>지금까지 집행액 (천원) <input type="number" data-spent value="0" min="0"></label>
-    <label>환경지원비 편성액 (천원) <input type="number" data-env value="3000" min="0"></label>
-    <label>업무추진비 편성액 (천원) <input type="number" data-biz value="3000" min="0"></label>
+    <label>환경지원비 편성액 (천원) <input type="number" data-env value="${cap}" min="0"></label>
+    <label>업무추진비 편성액 (천원) <input type="number" data-biz value="${cap}" min="0"></label>
     <button type="button" class="go" data-calc-go>계산하기 ✨</button>
     <div data-calc-out></div>
   </div>`;
@@ -1137,11 +1170,35 @@ function parseRemainQuestion(q){
   return Math.round(cheon);
 }
 
+/* 우리 학교 교부액을 알려주는 문장 인식: "학교 예산은 3000만원이야" / "교부액 3000만원으로 설정" 등 */
+function parseSetTotalQuestion(q){
+  const explicit = /설정|저장|기억해/.test(q) && /(예산|교부액)/.test(q);
+  const natural = /학교/.test(q) && /(예산|교부액|배정|배부|받았)/.test(q);
+  if(!explicit && !natural) return null;
+  const m = q.replace(/,/g,'').match(/(\d+(?:\.\d+)?)\s*(억|천만\s*원|천만원|백만\s*원|백만원|만\s*원|만원|천원|원)/);
+  if(!m) return null;
+  let n = parseFloat(m[1]); const unit = (m[2]||'').replace(/\s/g,'');
+  let cheon;
+  if(unit==='억') cheon = n*100000;
+  else if(unit==='천만원') cheon = n*10000;
+  else if(unit==='백만원') cheon = n*1000;
+  else if(unit==='만원') cheon = n*10;
+  else if(unit==='천원') cheon = n;
+  else cheon = n/1000;
+  return Math.round(cheon);
+}
+function parseResetTotalQuestion(q){
+  return /(예산|교부액).{0,6}(기본값|초기화|원래대로)|(기본값|초기화).{0,6}(예산|교부액)/.test(q);
+}
+
 /* ---------- 매칭 엔진 ---------- */
 function normalize(s){ return s.toLowerCase().replace(/\s+/g,''); }
 function answer(q){
   const remain = parseRemainQuestion(q);
   if(remain!==null && remain>0) return budgetAdvice(remain);
+  if(parseResetTotalQuestion(q)){ resetSchoolTotal(); return confirmSchoolTotalHTML(TOTAL_DEFAULT); }
+  const setTotal = parseSetTotalQuestion(q);
+  if(setTotal!==null && setTotal>0){ setSchoolTotal(setTotal); return confirmSchoolTotalHTML(setTotal); }
   if(/계산기|얼마 남|집행률/.test(q)) return `<h3>🧮 예산 계산기</h3><p>숫자를 넣고 계산하기를 눌러보세요!</p>${calcFormHTML()}`;
   const nq = normalize(q);
   // 1) 구매·지출 판정 엔진: 구체 품목이 보이면 콕 집어 판정 ("어디서 사?"류는 구매처 안내로)
@@ -1154,7 +1211,7 @@ function answer(q){
   if(/프롬프트|생성형|챗봇|클로드|claude|chatgpt|gpt|제미나이|gemini|\bai\b|ai로|에이아이/i.test(nq)
      && /보고서|슬라이드|발표|대본|개조식|자료/.test(nq)){
     const w = KB.find(k=>k.id==='aiwrite');
-    if(w) return w.html + `<h4 style="margin-top:1em">🔎 이것도 궁금하시다면</h4>${topicChipsHTML(w.id, 3)}`;
+    if(w) return resolveHtml(w) + `<h4 style="margin-top:1em">🔎 이것도 궁금하시다면</h4>${topicChipsHTML(w.id, 3)}`;
   }
   // 2) 주제 카드 매칭
   let best=null, bestScore=0;
@@ -1166,7 +1223,7 @@ function answer(q){
   // 3) 구매 의도인데 딱 맞는 근거가 없으면 → 공식 판단 기준으로 안내
   if((!best || bestScore<2) && BUY_INTENT_RE.test(nq)) return unknownBuyHTML();
   if(!best) return guideHTML();
-  return best.html + `<h4 style="margin-top:1em">🔎 이것도 궁금하시다면</h4>${topicChipsHTML(best.id, 3)}`;
+  return resolveHtml(best) + `<h4 style="margin-top:1em">🔎 이것도 궁금하시다면</h4>${topicChipsHTML(best.id, 3)}`;
 }
 
 /* ---------- UI ---------- */
@@ -1305,6 +1362,17 @@ form.addEventListener('submit', e=>{
 chat.addEventListener('click', e=>{
   const go = e.target.closest('[data-calc-go]');
   if(go){ runCalc(go.closest('[data-calc]')); return; }
+  const resetTotal = e.target.closest('[data-reset-total]');
+  if(resetTotal){
+    resetSchoolTotal();
+    addRow('user', '예산 기본값으로 되돌려줘');
+    const t = addRow('bot','<span class="typing"><i></i><i></i><i></i></span>');
+    setTimeout(()=>{
+      t.querySelector('.bubble').innerHTML = confirmSchoolTotalHTML(TOTAL_DEFAULT);
+      t.scrollIntoView({behavior:'smooth', block:'end'});
+    }, 300);
+    return;
+  }
   const ai = e.target.closest('[data-ai-q]');
   if(ai){
     const q = decodeURIComponent(ai.dataset.aiQ);
@@ -1320,7 +1388,7 @@ chat.addEventListener('click', e=>{
       addRow('user', item.title.replace(/^[^ ]+ /,''));
       const t = addRow('bot','<span class="typing"><i></i><i></i><i></i></span>');
       setTimeout(()=>{
-        t.querySelector('.bubble').innerHTML = item.html + `<h4 style="margin-top:1em">🔎 이것도 궁금하시다면</h4>${topicChipsHTML(item.id, 3)}`;
+        t.querySelector('.bubble').innerHTML = resolveHtml(item) + `<h4 style="margin-top:1em">🔎 이것도 궁금하시다면</h4>${topicChipsHTML(item.id, 3)}`;
         t.scrollIntoView({behavior:'smooth', block:'end'});
       }, 350);
     }
