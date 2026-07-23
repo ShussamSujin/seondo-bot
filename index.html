@@ -417,8 +417,27 @@ const KB = [
   </ul>
   <div class="warn">⚠️ <b>7월 2차 공유회 때 1학기 사례 + 예산 집행 결과를 먼저 제출</b>해요. 1학기 자료는 여름방학 전에 정리해 두세요! 정산은 12월 첫주, 결과보고서 서식 표지는 2027.2 기준이니 최종 제출 일정은 추후 안내를 따르세요.</div>
   <div class="tip">💡 작성 팁: 개조식으로, 성과가 드러나게, 정량 데이터·도표 활용. 우수 성과사례 1건(2쪽 이내)은 "타 학교와 차별화되는 대표 사례"로 미리 점찍어 두고 자료를 모으면 좋아요.</div>
-  <div class="chips" style="margin-top:.5em"><button type="button" class="chip c-sky" data-kb="aiwrite">🤖 AI로 보고서 작성하는 프롬프트 보기</button></div>
+  <div class="chips" style="margin-top:.5em"><button type="button" class="chip c-sky" data-kb="aiwrite">🤖 AI로 보고서 작성하는 프롬프트 보기</button><button type="button" class="chip c-peach" data-kb="guidebook">📖 가이드북으로 보고서 뼈대 잡기</button></div>
   <p class="src">출처: [서식] 2026 선도학교 운영 결과보고서(학교 작성용) · ${SRC_GUIDE}</p>`
+},
+{
+  id:'guidebook',
+  keywords:['가이드북','다섯 가지 질문','다섯가지 질문','5가지 질문','성장하는 교사','수업실천','수업 실천 가이드','교사주도성','교사 주도성','설명가능','수업 설계','수업설계','가이드북 활용','가이드북으로','뼈대','목차 잡'],
+  title:'📖 가이드북으로 보고서 뼈대 잡기',
+  html:`<h3>📖 "다섯 가지 질문"으로 보고서 흐름 잡기</h3>
+  <p>「성장하는 교사, 다섯 가지 질문」 가이드북의 5단계를 <b>보고서 목차에 그대로 대응</b>시키면, 억지스럽지 않게 이야기가 이어져요.</p>
+  <div class="tablewrap"><table>
+  <tr><th>가이드북 질문</th><th>보고서 어느 칸에</th><th>이렇게 쓰면 좋아요</th></tr>
+  <tr><td><b>① 무엇이 중요할까?</b><br>(왜 하나)</td><td>Ⅱ-1 운영 목표</td><td>"신기함·편리함"이 아니라 <b>교육적 의미</b>로 목표 서술 (예: "도구 체험이 아니라 ○○ 역량 신장을 위해")</td></tr>
+  <tr><td><b>② 무엇부터 시작할까?</b><br>(시작점)</td><td>Ⅰ 현황 · Ⅱ-2 운영 내용 도입부</td><td>우리 학교 여건(기기·교사 역량·학생)을 진단하고 <b>첫걸음</b>을 어디서 뗐는지</td></tr>
+  <tr><td><b>③ 어떻게 설계·개발할까?</b></td><td>Ⅱ-2 가. 수업·평가 혁신</td><td><b>교육적 타당성</b> 있는 수업 설계 — 성취기준→도구 선택→평가까지 연결된 흐름으로</td></tr>
+  <tr><td><b>④ 어떻게 실천할까?</b></td><td>Ⅱ-2 나. 교사 역량·역할 변화 · Ⅲ 우수사례</td><td><b>교사주도성</b>과 "왜 이렇게 가르쳤는지 <b>설명 가능한</b> 수업" 강조 — 대표 사례로</td></tr>
+  <tr><td><b>⑤ 어떻게 지속할까?</b></td><td>Ⅱ-4 개선·보완 · Ⅱ-5 향후 계획</td><td>일회성이 아니라 <b>학교문화·장기 성장</b>으로 — 차년도 방향, 확산 계획</td></tr>
+  </table></div>
+  <div class="tip">💡 이렇게 하면 심사자가 "교사가 스스로 연구하고 성장했구나"를 느껴요. 가이드북의 <b>단계별 실천가이드·워크시트</b>를 근거자료로 첨부하면 신뢰도가 올라가요.</div>
+  <div class="warn">📌 주의: 다섯 질문은 <b>흐름을 잡는 틀</b>일 뿐, 서식의 필수 항목(정량 성과·증빙)은 그대로 채워야 해요. 틀에 맞추느라 실제 실적을 빼먹지 마세요!</div>
+  <div class="chips" style="margin-top:.5em"><button type="button" class="chip c-sky" data-kb="aiwrite">🤖 AI로 초안 만드는 프롬프트</button><button type="button" class="chip c-pink" data-kb="report">📄 보고서 준비물 체크리스트</button></div>
+  <p class="src">출처: 「성장하는 교사, 다섯 가지 질문」 AI·디지털 기반 수업실천 가이드북(교육부)</p>`
 },
 {
   id:'tips',
@@ -1075,6 +1094,7 @@ function addChips(){
     ['📄 보고서 준비물', {kb:'report'}, 'c-pink'],
     ['💡 선배 꿀팁', {kb:'tips'}, 'c-mint'],
     ['🤖 AI로 보고서·슬라이드', {kb:'aiwrite'}, 'c-sky'],
+    ['📖 가이드북으로 보고서', {kb:'guidebook'}, 'c-peach'],
     ['📝 진단검사', {kb:'sen'}, 'c-mint'],
     ['👥 교원학습공동체', {kb:'plc'}, 'c-mint'],
     ['🎁 무료 지원', {kb:'support'}, 'c-sky'],
