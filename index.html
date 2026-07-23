@@ -1129,17 +1129,45 @@ function budgetAdvice(remainCheonwon){
   ${calcFormHTML()}`;
 }
 
+const CALC_PRESETS = [
+  {label:'3,000만원', total:30000},
+  {label:'3,500만원', total:35000},
+];
 function calcFormHTML(){
   const total = getSchoolTotal();
   const cap = schoolCap(total);
+  const chips = CALC_PRESETS.map(p=>
+    `<button type="button" class="chip c-blue" data-calc-preset="${p.total}" style="padding:4px 12px;font-size:.82rem${p.total===total?';outline:2px solid var(--accent,#3b82f6);outline-offset:1px':''}">${p.label}</button>`
+  ).join('');
   return `<div class="calc" data-calc>
+    <div style="margin-bottom:8px">
+      <div style="font-size:.82rem;color:#666;margin-bottom:5px">우리 학교 교부액을 선택하면 한도가 자동으로 채워져요 👇</div>
+      ${chips}
+    </div>
     <label>총 교부액 (천원) <input type="number" data-total value="${total}" min="0"></label>
     <label>지금까지 집행액 (천원) <input type="number" data-spent value="0" min="0"></label>
-    <label>환경지원비 편성액 (천원) <input type="number" data-env value="${cap}" min="0"></label>
-    <label>업무추진비 편성액 (천원) <input type="number" data-biz value="${cap}" min="0"></label>
+    <label>환경지원비 <b>최대 한도</b> (천원) <input type="number" data-env value="${cap}" min="0"></label>
+    <label>업무추진비 <b>최대 한도</b> (천원) <input type="number" data-biz value="${cap}" min="0"></label>
+    <div data-cap-hint style="font-size:.8rem;color:#2563eb;margin:-2px 0 8px">💡 현재 총 교부액 ${fmt(total)}천원 기준, 환경지원비·업무추진비는 각각 <b>최대 ${fmt(cap)}천원</b>까지 쓸 수 있어요.</div>
     <button type="button" class="go" data-calc-go>계산하기 ✨</button>
     <div data-calc-out></div>
   </div>`;
+}
+
+// 총 교부액이 바뀌면 환경지원비·업무추진비 한도 칸을 자동으로 다시 채워요.
+function applyCalcCaps(box){
+  const total = +box.querySelector('[data-total]').value || 0;
+  const cap = schoolCap(total);
+  box.querySelector('[data-env]').value = cap;
+  box.querySelector('[data-biz]').value = cap;
+  const hint = box.querySelector('[data-cap-hint]');
+  if(hint) hint.innerHTML = `💡 현재 총 교부액 ${fmt(total)}천원 기준, 환경지원비·업무추진비는 각각 <b>최대 ${fmt(cap)}천원</b>까지 쓸 수 있어요.`;
+  // 선택 버튼 강조 갱신
+  box.querySelectorAll('[data-calc-preset]').forEach(b=>{
+    const on = +b.getAttribute('data-calc-preset') === total;
+    b.style.outline = on ? '2px solid var(--accent,#3b82f6)' : '';
+    b.style.outlineOffset = on ? '1px' : '';
+  });
 }
 
 function runCalc(box){
@@ -1369,7 +1397,20 @@ form.addEventListener('submit', e=>{
   ask(q);
 });
 
+chat.addEventListener('input', e=>{
+  if(e.target.matches('[data-total]')){
+    applyCalcCaps(e.target.closest('[data-calc]'));
+  }
+});
+
 chat.addEventListener('click', e=>{
+  const preset = e.target.closest('[data-calc-preset]');
+  if(preset){
+    const box = preset.closest('[data-calc]');
+    box.querySelector('[data-total]').value = preset.getAttribute('data-calc-preset');
+    applyCalcCaps(box);
+    return;
+  }
   const go = e.target.closest('[data-calc-go]');
   if(go){ runCalc(go.closest('[data-calc]')); return; }
   const resetTotal = e.target.closest('[data-reset-total]');
